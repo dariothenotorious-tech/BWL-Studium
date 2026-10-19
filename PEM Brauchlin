@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Tabu</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 900px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 42px;
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      color: #6e6e73;
+      margin-bottom: 25px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 15px;
+    }
+
+    .team {
+      background: white;
+      padding: 15px 25px;
+      border-radius: 16px;
+      flex: 1;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .team.active {
+      outline: 3px solid #0071e3;
+    }
+
+    .team-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .score {
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .timer {
+      font-size: 48px;
+      font-weight: bold;
+      min-width: 130px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 28px;
+      padding: 35px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      margin-bottom: 25px;
+    }
+
+    .label {
+      text-transform: uppercase;
+      font-size: 13px;
+      letter-spacing: 1.5px;
+      color: #86868b;
+      margin-bottom: 10px;
+    }
+
+    .word {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 30px;
+    }
+
+    .forbidden-title {
+      color: #d70015;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .forbidden {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .forbidden span {
+      background: #fff1f2;
+      color: #d70015;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-weight: bold;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      padding: 14px 24px;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    .start {
+      background: #0071e3;
+      color: white;
+    }
+
+    .correct {
+      background: #34c759;
+      color: white;
+    }
+
+    .skip {
+      background: #ff9500;
+      color: white;
+    }
+
+    .switch {
+      background: #1d1d1f;
+      color: white;
+    }
+
+    .reset {
+      background: #e5e5ea;
+      color: #1d1d1f;
+    }
+
+    .message {
+      margin-top: 20px;
+      font-weight: bold;
+      min-height: 25px;
+    }
+
+    @media (max-width: 600px) {
+      .word {
+        font-size: 36px;
+      }
+
+      .timer {
+        font-size: 36px;
+      }
+
+      .topbar {
+        flex-direction: column;
+      }
+
+      .team {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>Digital Tabu</h1>
+  <div class="subtitle">
+    Erkläre den Begriff, ohne die verbotenen Wörter zu verwenden.
+  </div>
+
+  <div class="topbar">
+
+    <div class="team active" id="teamA">
+      <div class="team-title">Team A</div>
+      <div class="score" id="scoreA">0</div>
+    </div>
+
+    <div class="timer" id="timer">60</div>
+
+    <div class="team" id="teamB">
+      <div class="team-title">Team B</div>
+      <div class="score" id="scoreB">0</div>
+    </div>
+
+  </div>
+
+  <div class="card">
+
+    <div class="label">Gesuchter Begriff</div>
+
+    <div class="word" id="word">
+      Bereit?
+    </div>
+
+    <div class="forbidden-title">
+      TABU-WÖRTER
+    </div>
+
+    <div class="forbidden" id="forbidden">
+      <span>Start drücken</span>
+    </div>
+
+  </div>
+
+  <div class="buttons">
+
+    <button class="start" onclick="startGame()">
+      Runde starten
+    </button>
+
+    <button class="correct" onclick="correctAnswer()">
+      ✓ Richtig
+    </button>
+
+    <button class="skip" onclick="skipCard()">
+      Überspringen
+    </button>
+
+    <button class="switch" onclick="switchTeam()">
+      Team wechseln
+    </button>
+
+    <button class="reset" onclick="resetGame()">
+      Reset
+    </button>
+
+  </div>
+
+  <div class="message" id="message"></div>
+
+</div>
+
+
+<script>
+
+const cards = [
+
+  {
+    word: "ERP",
+    forbidden: ["Auftrag", "Ressourcen", "Buchhaltung"]
+  },
+
+  {
+    word: "MES",
+    forbidden: ["Produktion", "Maschine", "Fertigung"]
+  },
+
+  {
+    word: "DMS",
+    forbidden: ["Dokument", "Ablage", "Datei"]
+  },
+
+  {
+    word: "PIM",
+    forbidden: ["Produkt", "Information", "Daten"]
+  },
+
+  {
+    word: "CAD / CAM",
+    forbidden: ["Zeichnen", "CNC", "Konstruktion"]
+  },
+
+  {
+    word: "SCADA",
+    forbidden: ["Überwachung", "Visualisierung", "Anlage"]
+  },
+
+  {
+    word: "Schnittstelle",
+    forbidden: ["Verbindung", "Daten", "System"]
+  },
+
+  {
+    word: "Medienbruch",
+    forbidden: ["Papier", "manuell", "übertragen"]
+  },
+
+  {
+    word: "Datenfluss",
+    forbidden: ["Information", "System", "übertragen"]
+  },
+
+  {
+    word: "Flussdiagramm",
+    forbidden: ["Prozess", "Ablauf", "Pfeil"]
+  },
+
+  {
+    word: "Anforderungsprofil",
+    forbidden: ["Software", "Funktion", "Anforderung"]
+  },
+
+  {
+    word: "Pflichtenheft",
+    forbidden: ["Lieferant", "Umsetzung", "Anforderung"]
+  },
+
+  {
+    word: "Lastenheft",
+    forbidden: ["Kunde", "Anforderung", "Ziel"]
+  },
+
+  {
+    word: "Nutzwertanalyse",
+    forbidden: ["Bewertung", "Kriterien", "Gewichtung"]
+  },
+
+  {
+    word: "Muss-Kriterium",
+    forbidden: ["zwingend", "erfüllt", "Anforderung"]
+  },
+
+  {
+    word: "Kann-Kriterium",
+    forbidden: ["optional", "Wunsch", "Anforderung"]
+  },
+
+  {
+    word: "Effizienz",
+    forbidden: ["Zeit", "Aufwand", "schneller"]
+  },
+
+  {
+    word: "Digitalisierung",
+    forbidden: ["digital", "Papier", "Computer"]
+  },
+
+  {
+    word: "Digitale Transformation",
+    forbidden: ["Digitalisierung", "Prozess", "Technologie"]
+  },
+
+  {
+    word: "Digitale Kompetenz",
+    forbidden: ["Wissen", "Technologie", "anwenden"]
+  },
+
+  {
+    word: "Künstliche Intelligenz",
+    forbidden: ["ChatGPT", "künstlich", "intelligent"]
+  },
+
+  {
+    word: "Automatisierung",
+    forbidden: ["automatisch", "Maschine", "Prozess"]
+  },
+
+  {
+    word: "Sensor",
+    forbidden: ["messen", "Signal", "erkennen"]
+  },
+
+  {
+    word: "Aktor",
+    forbidden: ["Motor", "Ventil", "Bewegung"]
+  },
+
+  {
+    word: "SPS",
+    forbidden: ["Steuerung", "Programm", "Maschine"]
+  },
+
+  {
+    word: "CNC",
+    forbidden: ["Maschine", "Fräsen", "Programm"]
+  },
+
+  {
+    word: "Cloud",
+    forbidden: ["Internet", "Server", "Online"]
+  },
+
+  {
+    word: "Datenbank",
+    forbidden: ["Daten", "Speichern", "Tabelle"]
+  },
+
+  {
+    word: "Postprozessor",
+    forbidden: ["CNC", "Maschine", "Programm"]
+  },
+
+  {
+    word: "API",
+    forbidden: ["Schnittstelle", "Software", "Daten"]
+  }
+
+];
+
+let remainingCards = [...cards];
+
+let scoreA = 0;
+let scoreB = 0;
+
+let currentTeam = "A";
+
+let time = 60;
+let timerInterval = null;
+
+let running = false;
+
+
+/* Zufällige Karte */
+
+function nextCard() {
+
+  if (remainingCards.length === 0) {
+    remainingCards = [...cards];
+  }
+
+  const randomIndex =
+    Math.floor(Math.random() * remainingCards.length);
+
+  const card =
+    remainingCards.splice(randomIndex, 1)[0];
+
+  document.getElementById("word").innerText =
+    card.word;
+
+  const forbidden =
+    document.getElementById("forbidden");
+
+  forbidden.innerHTML = "";
+
+  card.forbidden.forEach(word => {
+
+    const span =
+      document.createElement("span");
+
+    span.innerText = word;
+
+    forbidden.appendChild(span);
+
+  });
+
+}
+
+
+/* Runde starten */
+
+function startGame() {
+
+  clearInterval(timerInterval);
+
+  time = 60;
+  running = true;
+
+  document.getElementById("timer").innerText =
+    time;
+
+  document.getElementById("message").innerText =
+    "";
+
+  nextCard();
+
+  timerInterval = setInterval(() => {
+
+    time--;
+
+    document.getElementById("timer").innerText =
+      time;
+
+    if (time <= 0) {
+
+      clearInterval(timerInterval);
+
+      running = false;
+
+      document.getElementById("message").innerText =
+        "Zeit abgelaufen! Team wechseln.";
+
+      document.getElementById("word").innerText =
+        "STOP";
+
+      document.getElementById("forbidden").innerHTML =
+        "";
+
+    }
+
+  }, 1000);
+
+}
+
+
+/* Richtige Antwort */
+
+function correctAnswer() {
+
+  if (!running) return;
+
+  if (currentTeam === "A") {
+
+    scoreA++;
+
+    document.getElementById("scoreA").innerText =
+      scoreA;
+
+  } else {
+
+    scoreB++;
+
+    document.getElementById("scoreB").innerText =
+      scoreB;
+
+  }
+
+  nextCard();
+
+}
+
+
+/* Karte überspringen */
+
+function skipCard() {
+
+  if (!running) return;
+
+  nextCard();
+
+}
+
+
+/* Team wechseln */
+
+function switchTeam() {
+
+  currentTeam =
+    currentTeam === "A" ? "B" : "A";
+
+  document
+    .getElementById("teamA")
+    .classList.toggle(
+      "active",
+      currentTeam === "A"
+    );
+
+  document
+    .getElementById("teamB")
+    .classList.toggle(
+      "active",
+      currentTeam === "B"
+    );
+
+  clearInterval(timerInterval);
+
+  running = false;
+
+  time = 60;
+
+  document.getElementById("timer").innerText =
+    time;
+
+  document.getElementById("word").innerText =
+    "Bereit?";
+
+  document.getElementById("forbidden").innerHTML =
+    "<span>Runde starten</span>";
+
+}
+
+
+/* Spiel zurücksetzen */
+
+function resetGame() {
+
+  clearInterval(timerInterval);
+
+  scoreA = 0;
+  scoreB = 0;
+
+  time = 60;
+
+  currentTeam = "A";
+
+  running = false;
+
+  remainingCards = [...cards];
+
+  document.getElementById("scoreA").innerText = 0;
+  document.getElementById("scoreB").innerText = 0;
+
+  document.getElementById("timer").innerText = 60;
+
+  document.getElementById("word").innerText =
+    "Bereit?";
+
+  document.getElementById("forbidden").innerHTML =
+    "<span>Start drücken</span>";
+
+  document.getElementById("message").innerText =
+    "";
+
+  document
+    .getElementById("teamA")
+    .classList.add("active");
+
+  document
+    .getElementById("teamB")
+    .classList.remove("active");
+
+}
+
+</script>
+
+</body>
+</html>
